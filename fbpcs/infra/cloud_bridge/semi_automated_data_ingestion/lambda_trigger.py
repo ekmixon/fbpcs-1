@@ -37,9 +37,9 @@ def lambda_handler(event, context):
         logger.info(s3_info)
         s3_bucket = s3_info["bucket"]["name"]
         s3_object_key = s3_info["object"]["key"]
-        s3_read_path = s3_bucket + "/" + s3_object_key
+        s3_read_path = f"{s3_bucket}/{s3_object_key}"
         s3_write_path = 'TO_BE_UPDATED_DURING_DEPLOYMENT'
-        logger.info("s3_read_path: " + s3_read_path)
+        logger.info(f"s3_read_path: {s3_read_path}")
         response = client.start_job_run(
             JobName=glueJobName,
             Arguments={
@@ -47,6 +47,6 @@ def lambda_handler(event, context):
                 "--s3_write_path": s3_write_path,
             },
         )
-        logger.info("## STARTED GLUE JOB: " + glueJobName)
+        logger.info(f"## STARTED GLUE JOB: {glueJobName}")
         logger.info("## GLUE JOB RUN ID: " + response["JobRunId"])
         return response

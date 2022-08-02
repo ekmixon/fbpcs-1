@@ -188,17 +188,15 @@ class PIDDispatcher(Dispatcher):
         # clear out the already finished stages
         self._cleanup_complete_stages()
         instance = self.instance_repository.read(self.instance_id)
-        run_ready_stages = []
-        for node in self.dag.nodes:
-            # nodes with no dependencies left and who have not already been
-            # started are eligible to be ran
+        return [
+            node
+            for node in self.dag.nodes
             if (
                 self.dag.in_degree(node) == 0
                 and instance.stages_status.get(str(node.stage_type), None)
                 is not PIDStageStatus.STARTED
-            ):
-                run_ready_stages.append(node)
-        return run_ready_stages
+            )
+        ]
 
     async def _run_eligible_stages(
         self, stages: List[PIDStage]

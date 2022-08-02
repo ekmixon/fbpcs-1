@@ -59,9 +59,7 @@ class TestBufferedS3Reader(unittest.TestCase):
         reader = BufferedS3Reader(self.s3_path, self.storage_service)
         reader.data = "x" * 100
         temp_path = reader.copy_to_local()
-        with open(temp_path) as f:
-            content = f.read()
-
+        content = pathlib.Path(temp_path).read_text()
         self.assertEqual(reader.data, content)
         # The caller is responsible for cleaning up the temporary file
         os.unlink(temp_path)

@@ -18,14 +18,12 @@ def lambda_handler(event, context):
     ##### NOTE: this script assume the schema is correct, no missing items
     for record in event["records"]:
 
-        row = {}
         recordId = record["recordId"]
-        row["recordId"] = recordId
-        row["result"] = "Ok"
+        row = {"recordId": recordId, "result": "Ok"}
         decoded_data = json.loads(base64.b64decode(record["data"]))
 
         dic = dict(os.environ.items())
-        debug = "DEBUG" in dic.keys() and dic["DEBUG"] == "true"
+        debug = "DEBUG" in dic and dic["DEBUG"] == "true"
 
         if debug:
             print(
@@ -59,13 +57,15 @@ def lambda_handler(event, context):
             print(msg)
             continue
 
-        data = {}
-        data["timestamp"] = timestamp
-        data["currency_type"] = currency_type
-        data["conversion_value"] = conversion_value
-        data["event_type"] = event_type
-        data["email"] = email
-        data["action_source"] = action_source
+        data = {
+            "timestamp": timestamp,
+            "currency_type": currency_type,
+            "conversion_value": conversion_value,
+            "event_type": event_type,
+            "email": email,
+            "action_source": action_source,
+        }
+
         # firehose need data to be b64-encoded
         data = json.dumps(data) + "\n"
         data = data.encode("utf-8")

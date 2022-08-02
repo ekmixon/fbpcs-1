@@ -212,7 +212,7 @@ class PrivateAttributionService:
         # We will first have to make PL provide all attributes at PrivateComputationInstance
         # instance creation time, then mark the attributes required in PrivateComputationInstance,
         # then we can remove the checked_casts
-        pid_instance_id = instance_id + "_id_match" + retry_counter_str
+        pid_instance_id = f"{instance_id}_id_match{retry_counter_str}"
         pid_instance = self.pid_svc.create_instance(
             instance_id=pid_instance_id,
             protocol=PIDProtocol.UNION_PID,
@@ -284,7 +284,7 @@ class PrivateAttributionService:
             )
 
         output_path = checked_cast(str, pa_instance.data_processing_output_path)
-        combine_output_path = output_path + "_combine"
+        combine_output_path = f"{output_path}_combine"
         # execute combiner step
         combiner_service = CppAttributionIdSpineCombinerService()
         binary_config = self.onedocker_binary_config_map[
@@ -469,7 +469,7 @@ class PrivateAttributionService:
             OneDockerBinaryNames.ATTRIBUTION_COMPUTE.value
         ]
         mpc_instance = await self._create_and_start_mpc_instance(
-            instance_id=instance_id + "_compute_metrics" + retry_counter_str,
+            instance_id=f"{instance_id}_compute_metrics{retry_counter_str}",
             game_name=game_name,
             mpc_party=self._map_pa_role_to_mpc_party(pa_instance.role),
             num_containers=checked_cast(int, pa_instance.num_mpc_containers),
@@ -478,6 +478,7 @@ class PrivateAttributionService:
             game_args=game_args,
             container_timeout=container_timeout,
         )
+
 
         logging.info("Finished running MPC instance.")
 
@@ -571,16 +572,16 @@ class PrivateAttributionService:
             OneDockerBinaryNames.SHARD_AGGREGATOR.value
         ]
         mpc_instance = await self._create_and_start_mpc_instance(
-            instance_id=instance_id + "_aggregate_shards" + retry_counter_str,
+            instance_id=f"{instance_id}_aggregate_shards{retry_counter_str}",
             game_name=game,
             mpc_party=self._map_pa_role_to_mpc_party(pa_instance.role),
             num_containers=1,
             binary_version=binary_config.binary_version,
             server_ips=server_ips,
-            # Below are all kwargs
             game_args=game_args,
             container_timeout=container_timeout,
         )
+
 
         pa_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         pa_instance.status = PrivateComputationInstanceStatus.AGGREGATION_STARTED

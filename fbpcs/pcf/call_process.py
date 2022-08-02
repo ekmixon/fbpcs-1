@@ -23,9 +23,7 @@ async def _read_stream(
     has run out of data to send.
     """
     logger.debug("Listening to a new StreamReader")
-    while True:
-        if not stream:
-            break
+    while stream:
         line = await stream.readline()
         if not line:
             break

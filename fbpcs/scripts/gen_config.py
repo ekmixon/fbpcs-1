@@ -48,13 +48,11 @@ def build_replacements_from_config(config: Dict[str, Any]) -> Dict[str, Any]:
     # Assume we can only update leaf nodes, otherwise things get weird
     replacements = {}
     for k, v in config.items():
-        if isinstance(v, str):
-            replacements[k] = v
-        elif isinstance(v, list):
+        if isinstance(v, (str, list)):
             replacements[k] = v
         elif isinstance(v, dict):
             # Recurse
-            replacements.update(build_replacements_from_config(v))
+            replacements |= build_replacements_from_config(v)
     return replacements
 
 

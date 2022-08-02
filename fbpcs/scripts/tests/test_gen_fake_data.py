@@ -359,8 +359,7 @@ class TestGenFakeData(unittest.TestCase):
             gen_fake_data._make_input_csv(args)
         self.assertEqual(args["--num_records"] + 1, m().readline.call_count)
         calls = [call("id_,opportunity,test_flag\n")]
-        for i in range(args["--num_records"]):
-            calls.append(call(f"{i},0,0\n"))
+        calls.extend(call(f"{i},0,0\n") for i in range(args["--num_records"]))
         m().write.assert_has_calls(calls)
 
         # Test with --from_header and --num_records set
@@ -373,6 +372,5 @@ class TestGenFakeData(unittest.TestCase):
             gen_fake_data._make_input_csv(args)
 
         calls = [call("id_,opportunity,test_flag\n")]
-        for i in range(args["--num_records"]):
-            calls.append(call(f"{i},0,0\n"))
+        calls.extend(call(f"{i},0,0\n") for i in range(args["--num_records"]))
         m().write.assert_has_calls(calls)

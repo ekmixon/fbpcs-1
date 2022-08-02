@@ -136,7 +136,7 @@ def _generate_line(
     column_overrides = {}
     if line != "":
         values = line.split(",")
-        column_overrides = {col: val for col, val in zip(header, values)}
+        column_overrides = dict(zip(header, values))
     # Get some fake data
     values = _faked_data(
         row_num=row_num,

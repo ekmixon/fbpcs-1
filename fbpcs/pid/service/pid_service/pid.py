@@ -135,8 +135,7 @@ class PIDService:
         for stage, status in instance.stages_status.copy().items():
             if status in [PIDStageStatus.COMPLETED, PIDStageStatus.FAILED]:
                 continue
-            containers = instance.stages_containers.get(stage, None)
-            if containers:
+            if containers := instance.stages_containers.get(stage, None):
                 container_ids = [container.instance_id for container in containers]
                 containers = self.onedocker_svc.get_containers(container_ids)
                 new_stage_status = PIDStage.get_stage_status_from_containers(containers)

@@ -33,9 +33,10 @@ class TestPrivateComputationFramework(MPCTestCase):
                 self._make_input_csv(
                     game=ConversionLift, role=Role.PUBLISHER, num_records=10
                 )
-                for i in range(num_files)
+                for _ in range(num_files)
             ]
         )
+
         self.output_files = self.input_files
         self.tempdirs = [f.parent for f in self.input_files]
 

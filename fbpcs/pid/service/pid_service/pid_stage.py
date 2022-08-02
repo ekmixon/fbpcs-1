@@ -109,13 +109,12 @@ class PIDStage(abc.ABC):
         """
         for path in paths:
             # If the path isn't local, assume our storage_svc can handle it
-            if StorageService.path_type(path) != PathType.Local:
-                if not self.storage_svc.file_exists(path):
-                    return False
-            else:
+            if StorageService.path_type(path) == PathType.Local:
                 # Local path
                 if not os.path.exists(path):
                     return False
+            elif not self.storage_svc.file_exists(path):
+                return False
         return True
 
     def copy_synthetic_shard(self, src: str, dest: str) -> None:

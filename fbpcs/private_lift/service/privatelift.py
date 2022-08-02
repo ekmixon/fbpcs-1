@@ -290,7 +290,7 @@ class PrivateLiftService:
         )
 
         # Create a new pid instance
-        pid_instance_id = instance_id + "_id_match" + retry_counter_str
+        pid_instance_id = f"{instance_id}_id_match{retry_counter_str}"
         pid_instance = self.pid_svc.create_instance(
             instance_id=pid_instance_id,
             protocol=PIDProtocol.UNION_PID,
@@ -421,13 +421,13 @@ class PrivateLiftService:
         # TODO T98578552: deprecate output_path and pl_instance.data_processing_output_path_tmp
         # use pl_instance.data_processing_output_path as source of truth
         if output_path:
-            prepared_data_output_path = output_path + "_prepared"
+            prepared_data_output_path = f"{output_path}_prepared"
             pl_instance.data_processing_output_path_tmp = prepared_data_output_path
             self.instance_repository.update(pl_instance)
         else:
             prepared_data_output_path = pl_instance.data_processing_output_path
 
-        combine_output_path = checked_cast(str, prepared_data_output_path) + "_combine"
+        combine_output_path = f"{checked_cast(str, prepared_data_output_path)}_combine"
         # execute combiner step
         if skip_tasks_on_container:
             self.logger.info(f"[{self}] Skipping CppLiftIdSpineCombinerService")
@@ -624,15 +624,18 @@ class PrivateLiftService:
         logging.info("Starting to run MPC instance.")
         binary_name = OneDockerBinaryNames.LIFT_COMPUTE.value
         mpc_instance = await self._create_and_start_mpc_instance(
-            instance_id=instance_id + "_compute_metrics" + retry_counter_str,
+            instance_id=f"{instance_id}_compute_metrics{retry_counter_str}",
             game_name=game_name,
             mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
             num_containers=len(game_args),
-            binary_version=self.onedocker_binary_config_map[binary_name].binary_version,
+            binary_version=self.onedocker_binary_config_map[
+                binary_name
+            ].binary_version,
             server_ips=server_ips,
             game_args=game_args,
             container_timeout=container_timeout,
         )
+
 
         logging.info("MPC instance started running.")
 
@@ -739,6 +742,7 @@ class PrivateLiftService:
         if output_path != pl_instance.shard_aggregate_stage_output_path:
             pl_instance.aggregated_result_path_tmp = output_path
 
+        binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
         if is_validating:
             # num_containers_real_data is the number of containers processing real data
             # synthetic data is processed by a dedicated extra container, and this container is always the last container,
@@ -765,13 +769,13 @@ class PrivateLiftService:
                     "input_base_path": input_path,
                     "num_shards": num_synthetic_data_shards,
                     "metrics_format_type": "lift",
-                    "output_path": output_path + "_synthetic_data_shards",
+                    "output_path": f"{output_path}_synthetic_data_shards",
                     "first_shard_index": synthetic_data_shard_start_index,
                 },
             ]
-            binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
+
             mpc_instance = await self._create_and_start_mpc_instance(
-                instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
+                instance_id=f"{instance_id}_aggregate_metrics{retry_counter_str}",
                 game_name="shard_aggregator",
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=2,
@@ -782,6 +786,7 @@ class PrivateLiftService:
                 game_args=game_args,
                 container_timeout=container_timeout,
             )
+
         else:
             # Create and start MPC instance
             game_args = [
@@ -792,9 +797,8 @@ class PrivateLiftService:
                     "output_path": output_path,
                 },
             ]
-            binary_name = OneDockerBinaryNames.SHARD_AGGREGATOR.value
             mpc_instance = await self._create_and_start_mpc_instance(
-                instance_id=instance_id + "_aggregate_metrics" + retry_counter_str,
+                instance_id=f"{instance_id}_aggregate_metrics{retry_counter_str}",
                 game_name="shard_aggregator",
                 mpc_party=self._map_pl_role_to_mpc_party(pl_instance.role),
                 num_containers=1,
@@ -805,6 +809,7 @@ class PrivateLiftService:
                 game_args=game_args,
                 container_timeout=container_timeout,
             )
+
         # Push MPC instance to PrivateComputationInstance.instances and update PL Instance status
         pl_instance.instances.append(PCSMPCInstance.from_mpc_instance(mpc_instance))
         self._update_status(
@@ -913,11 +918,12 @@ class PrivateLiftService:
         )
 
         post_processing_instance = PostProcessingInstance.create_instance(
-            instance_id=instance_id + "_post_processing" + retry_counter_str,
+            instance_id=f"{instance_id}_post_processing{retry_counter_str}",
             handlers=post_processing_handlers,
             handler_statuses=post_processing_handlers_statuses,
             status=PostProcessingInstanceStatus.STARTED,
         )
+
 
         pl_instance.instances.append(post_processing_instance)
 
@@ -1149,14 +1155,13 @@ class PrivateLiftService:
         self, param_name: str, instance_param: Optional[T], override_param: Optional[T]
     ) -> T:
         res = override_param
-        if override_param is not None:
-            if instance_param is not None and instance_param != override_param:
-                self.logger.warning(
-                    f"{param_name}={override_param} is given and will be used, "
-                    f"but it is inconsistent with {instance_param} recorded in the PrivateComputationInstance"
-                )
-        else:
+        if res is None:
             res = instance_param
+        elif instance_param is not None and instance_param != res:
+            self.logger.warning(
+                f"{param_name}={res} is given and will be used, but it is inconsistent with {instance_param} recorded in the PrivateComputationInstance"
+            )
+
         if res is None:
             raise ValueError(f"Missing value for parameter {param_name}")
 

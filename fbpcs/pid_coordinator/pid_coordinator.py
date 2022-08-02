@@ -91,15 +91,14 @@ def gen_command(
             return f'["python3 -m src.pid_worker.pid_worker run_mk partner {in_path} {out_path} {server_hostname} --port={port}"]'
         else:
             raise ValueError("The protocol is not valid")
+    elif not protocol_name:
+        return f'["python3 -m src.pid_worker.pid_worker run publisher {in_path} {out_path} --port={port}"]'
+    elif protocol_name == MULTI_KEY_SHUFFLER_PROTOCOL:
+        return f'["python3 -m src.pid_worker.pid_worker shuffler publisher {in_path} {out_path} {encryption_keys} --port={port}"]'
+    elif protocol_name == MULTI_KEY_PROTOCOL:
+        return f'["python3 -m src.pid_worker.pid_worker run_mk publisher {in_path} {out_path} --port={port}"]'
     else:
-        if not protocol_name:
-            return f'["python3 -m src.pid_worker.pid_worker run publisher {in_path} {out_path} --port={port}"]'
-        elif protocol_name == MULTI_KEY_SHUFFLER_PROTOCOL:
-            return f'["python3 -m src.pid_worker.pid_worker shuffler publisher {in_path} {out_path} {encryption_keys} --port={port}"]'
-        elif protocol_name == MULTI_KEY_PROTOCOL:
-            return f'["python3 -m src.pid_worker.pid_worker run_mk publisher {in_path} {out_path} --port={port}"]'
-        else:
-            raise ValueError("The protocol is not valid")
+        raise ValueError("The protocol is not valid")
 
 
 def gen_environment(key_id: str, key_data: str, region: str) -> str:
@@ -109,7 +108,7 @@ def gen_environment(key_id: str, key_data: str, region: str) -> str:
         "PL_AWS_REGION": region,
     }
     objs = ", ".join(f'{{"name": "{k}", "value": "{v}"}}' for k, v in env.items())
-    return "[" + objs + "]"
+    return f"[{objs}]"
 
 
 def gen_cli(config: Dict[str, Any], cluster: str, cmd: str, env: str, vpc: str) -> str:
@@ -273,8 +272,8 @@ def prepare(input_path: str, output_path: str, num_shards: int) -> None:
 
     procs = []
     output_paths = []
+    preamble = "python3 -m src.pid_worker.pid_worker prepare"
     for i in range(num_shards):
-        preamble = "python3 -m src.pid_worker.pid_worker prepare"
         local_path = abstract_file_reader_path(pathlib.Path(f"{input_path}_{i}"))
         output_path = f"{prepare_outpath}_{i}"
         cmd = shlex.split(f'{preamble} "{local_path}" "{output_path}"')
@@ -335,9 +334,7 @@ def run_partner(
     print(f"Loading IPs from {ip_file}")
     local_path = abstract_file_reader_path(pathlib.Path(ip_file))
     with open(local_path) as f:
-        for line in f:
-            ips.append(line.strip())
-
+        ips.extend(line.strip() for line in f)
     if len(ips) != num_shards:
         raise ValueError(f"Expected {num_shards} IPs but found {len(ips)} in {ip_file}")
 
@@ -508,11 +505,7 @@ def main():
             args["<output_path>"],
             args["--num_shards"],
         )
-    elif args["aggregate"]:
-        # Download all files to local disk
-        # Concat and sort
-        pass
-    else:
+    elif not args["aggregate"]:
         raise UnreachableBlockError()
 
 

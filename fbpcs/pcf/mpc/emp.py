@@ -82,7 +82,7 @@ class EmpMPCFramework(ServerClientMPCFramework):
             f" --output_filename={self.output_file}"
         )
         if self.output_s3_path:
-            cmd = cmd + f" --output_s3_path={self.output_s3_path}"
+            cmd = f"{cmd} --output_s3_path={self.output_s3_path}"
         cmd = cmd.split(" ") + self.game.extra_args
         self.base_logger.debug(f"running command: {cmd}")
 
@@ -104,7 +104,7 @@ class EmpMPCFramework(ServerClientMPCFramework):
         result_filepath = self.input_file.parent / self.output_file
         all_results: Dict[str, Dict[Metric, int]] = {}
         with open(result_filepath) as f:
-            for line in f.readlines():
+            for line in f:
                 if len(line) == 0:
                     # For some reason, we sometimes read an empty line from the
                     # output of the EMP MPC program in the result file.
@@ -112,10 +112,7 @@ class EmpMPCFramework(ServerClientMPCFramework):
                 parts = line.strip().split(",")
                 feature_group = parts[0]
                 contents = [int(field) for field in parts[1:]]
-                all_results[feature_group] = {
-                    metric: value
-                    for metric, value in zip(self.game.output_metrics, contents)
-                }
+                all_results[feature_group] = dict(zip(self.game.output_metrics, contents))
         return all_results
 
     def _check_executable(self, absolute_path: pathlib.Path) -> None:

@@ -143,12 +143,11 @@ class MPCTestCase(unittest.TestCase):
         # column is an array. series represents an array of arrays
         # each element needs to be translated into publisher and partner
         # value arrays
-        if len(series) != 0 and isinstance(series[0], list):
+        if series and isinstance(series[0], list):
             result = [
                 MPCTestCase._make_secret_share_from_data_array(val) for val in series
             ]
             a_shares, b_shares = map(list, zip(*result))
-        # column is a scalar column. series represents an array
         else:
             a_shares, b_shares = MPCTestCase._make_secret_share_from_data_array(series)
         return a_shares, b_shares
@@ -337,13 +336,12 @@ class MPCTestCase(unittest.TestCase):
                             test_events += 1
                             if not is_converter:
                                 test_sales_sub_sum += partner[InputColumn.values][i][j]
-                    else:
-                        if valid_ts:
-                            control_events += 1
-                            if not is_converter:
-                                control_sales_sub_sum += partner[InputColumn.values][i][
-                                    j
-                                ]
+                    elif valid_ts:
+                        control_events += 1
+                        if not is_converter:
+                            control_sales_sub_sum += partner[InputColumn.values][i][
+                                j
+                            ]
                 if not is_converter:
                     test_sales += test_sales_sub_sum
                     test_sq += test_sales_sub_sum ** 2
@@ -355,28 +353,26 @@ class MPCTestCase(unittest.TestCase):
         }
 
         if is_converter:
-            res.update(
-                {
-                    Metric.test_purchasers: test_events,
-                    Metric.control_purchasers: control_events,
-                }
-            )
+            res |= {
+                Metric.test_purchasers: test_events,
+                Metric.control_purchasers: control_events,
+            }
+
         else:
             # Conversion lift uses _conversions instead of _purchasers
-            res.update(
-                {
-                    Metric.test_conversions: test_events,
-                    Metric.control_conversions: control_events,
-                    # pyre-fixme[61]: `test_sales` may not be initialized here.
-                    Metric.test_sales: test_sales,
-                    # pyre-fixme[61]: `control_sales` may not be initialized here.
-                    Metric.control_sales: control_sales,
-                    # pyre-fixme[61]: `test_sq` may not be initialized here.
-                    Metric.test_sales_squared: test_sq,
-                    # pyre-fixme[61]: `control_sq` may not be initialized here.
-                    Metric.control_sales_squared: control_sq,
-                }
-            )
+            res |= {
+                Metric.test_conversions: test_events,
+                Metric.control_conversions: control_events,
+                # pyre-fixme[61]: `test_sales` may not be initialized here.
+                Metric.test_sales: test_sales,
+                # pyre-fixme[61]: `control_sales` may not be initialized here.
+                Metric.control_sales: control_sales,
+                # pyre-fixme[61]: `test_sq` may not be initialized here.
+                Metric.test_sales_squared: test_sq,
+                # pyre-fixme[61]: `control_sq` may not be initialized here.
+                Metric.control_sales_squared: control_sq,
+            }
+
         return res
 
     def _compute_secret_share_conversion_lift_metrics(
@@ -443,26 +439,24 @@ class MPCTestCase(unittest.TestCase):
         res = {Metric.test_population: test_pop, Metric.control_population: control_pop}
 
         if is_converter:
-            res.update(
-                {
-                    Metric.test_purchasers: test_events,
-                    Metric.control_purchasers: control_events,
-                }
-            )
+            res |= {
+                Metric.test_purchasers: test_events,
+                Metric.control_purchasers: control_events,
+            }
+
         else:
             # Conversion lift uses _conversions instead of _purchasers
-            res.update(
-                {
-                    Metric.test_conversions: test_events,
-                    Metric.control_conversions: control_events,
-                    # pyre-fixme[61]: `test_sales` may not be initialized here.
-                    Metric.test_sales: test_sales,
-                    # pyre-fixme[61]: `control_sales` may not be initialized here.
-                    Metric.control_sales: control_sales,
-                    # pyre-fixme[61]: `test_sq` may not be initialized here.
-                    Metric.test_sales_squared: test_sq,
-                    # pyre-fixme[61]: `control_sq` may not be initialized here.
-                    Metric.control_sales_squared: control_sq,
-                }
-            )
+            res |= {
+                Metric.test_conversions: test_events,
+                Metric.control_conversions: control_events,
+                # pyre-fixme[61]: `test_sales` may not be initialized here.
+                Metric.test_sales: test_sales,
+                # pyre-fixme[61]: `control_sales` may not be initialized here.
+                Metric.control_sales: control_sales,
+                # pyre-fixme[61]: `test_sq` may not be initialized here.
+                Metric.test_sales_squared: test_sq,
+                # pyre-fixme[61]: `control_sq` may not be initialized here.
+                Metric.control_sales_squared: control_sq,
+            }
+
         return res

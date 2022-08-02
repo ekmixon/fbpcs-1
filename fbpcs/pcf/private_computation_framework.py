@@ -70,10 +70,10 @@ class PrivateComputationFramework(object):
     @staticmethod
     def _blocks(files, size=65536):  # 64*1024
         while True:
-            b = files.read(size)
-            if not b:
+            if b := files.read(size):
+                yield b
+            else:
                 break
-            yield b
 
     @classmethod
     def _gen_frameworks(

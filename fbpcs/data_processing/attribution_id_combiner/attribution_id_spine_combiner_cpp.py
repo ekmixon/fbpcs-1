@@ -29,9 +29,7 @@ class CppAttributionIdSpineCombinerService:
         padding_size: int,
         sort_strategy: str,
     ) -> str:
-        # TODO: Probably put exe in an env variable?
-        # Try to align with existing paths
-        cmd_args = " ".join(
+        return " ".join(
             [
                 f"--spine_path={spine_path}",
                 f"--data_path={data_path}",
@@ -42,7 +40,6 @@ class CppAttributionIdSpineCombinerService:
                 f"--sort_strategy={sort_strategy}",
             ]
         )
-        return cmd_args
 
     def combine_on_container(
         self,

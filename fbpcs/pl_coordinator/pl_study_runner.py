@@ -200,10 +200,10 @@ def _get_study_data(study_id: str, client: PLGraphAPIClient) -> Any:
 def _get_chunks(
     data: Dict[str, Dict[str, str]], size: int
 ) -> List[Dict[str, Dict[str, str]]]:
-    chunks = []
-    for i in range(0, len(data), size):
-        chunks.append(dict(list(data.items())[i : i + size]))
-    return chunks
+    return [
+        dict(list(data.items())[i : i + size])
+        for i in range(0, len(data), size)
+    ]
 
 
 def _get_cell_obj_instance(
@@ -226,12 +226,14 @@ def _get_cell_obj_instance(
         cell_data = json.loads(cell_data)
         cell_id = str(cell_data["breakdowns"]["cell_id"])
         latest_data_ts = cell_data["latest_data_ts"]
-        cell_obj_instance[cell_id] = {}
-        for objective_id in objectives_data:
-            cell_obj_instance[cell_id][objective_id] = {
+        cell_obj_instance[cell_id] = {
+            objective_id: {
                 "latest_data_ts": latest_data_ts,
                 "input_path": objectives_data[objective_id],
             }
+            for objective_id in objectives_data
+        }
+
     # for these cell-obj pairs, find those with valid instances
     for instance_data in instances_data:
         breakdown_key = json.loads(instance_data["breakdown_key"])
@@ -343,7 +345,7 @@ def _has_duplicates(str_list: List[str]) -> bool:
 
 
 def _join_err_msgs(err_msgs: List[str]) -> str:
-    err_msgs = list(map(lambda msg: "Error: " + msg, err_msgs))
+    err_msgs = list(map(lambda msg: f"Error: {msg}", err_msgs))
     return "\n" + "\n".join(err_msgs)
 
 

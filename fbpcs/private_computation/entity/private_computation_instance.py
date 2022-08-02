@@ -156,12 +156,13 @@ class PrivateComputationInstance(InstanceBase):
         return self._get_stage_output_path("shard_aggregation_stage", "json")
 
     def _get_stage_output_path(self, stage: str, extension_type: str) -> Optional[str]:
-        if not self.output_dir:
-            return None
-
-        return os.path.join(
-            self.output_dir,
-            f"{self.instance_id}_out_dir",
-            stage,
-            f"out.{extension_type}",
+        return (
+            os.path.join(
+                self.output_dir,
+                f"{self.instance_id}_out_dir",
+                stage,
+                f"out.{extension_type}",
+            )
+            if self.output_dir
+            else None
         )

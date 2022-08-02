@@ -105,11 +105,13 @@ class TestPIDDispatcher(unittest.TestCase):
                 onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=True,
             )
-        constructed_map = {}
-        for stage in dispatcher.dag.nodes:
-            constructed_map[stage.stage_type] = [
-                next_stage.stage_type for next_stage in dispatcher.dag.successors(stage)
+        constructed_map = {
+            stage.stage_type: [
+                next_stage.stage_type
+                for next_stage in dispatcher.dag.successors(stage)
             ]
+            for stage in dispatcher.dag.nodes
+        }
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
         self.assertEqual(len(constructed_map), 3)
@@ -160,11 +162,13 @@ class TestPIDDispatcher(unittest.TestCase):
                 spine_path="spine.txt",
                 fail_fast=True,
             )
-        constructed_map = {}
-        for stage in dispatcher.dag.nodes:
-            constructed_map[stage.stage_type] = [
-                next_stage.stage_type for next_stage in dispatcher.dag.successors(stage)
+        constructed_map = {
+            stage.stage_type: [
+                next_stage.stage_type
+                for next_stage in dispatcher.dag.successors(stage)
             ]
+            for stage in dispatcher.dag.nodes
+        }
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
         self.assertEqual(len(constructed_map), 3)
@@ -211,11 +215,13 @@ class TestPIDDispatcher(unittest.TestCase):
                 onedocker_binary_config_map=defaultdict(lambda: "OD_CONFIG"),
                 fail_fast=True,
             )
-        constructed_map = {}
-        for stage in dispatcher.dag.nodes:
-            constructed_map[stage.stage_type] = [
-                next_stage.stage_type for next_stage in dispatcher.dag.successors(stage)
+        constructed_map = {
+            stage.stage_type: [
+                next_stage.stage_type
+                for next_stage in dispatcher.dag.successors(stage)
             ]
+            for stage in dispatcher.dag.nodes
+        }
 
         self.assertEqual(len(dispatcher.dag.nodes), 3)
         self.assertEqual(len(constructed_map), 3)

@@ -77,4 +77,4 @@ class TestLocalPrivateComputationInstanceRepository(unittest.TestCase):
         self.repo.delete(instance_id)
 
     def _get_random_id(self) -> str:
-        return "id" + "".join(random.choice(string.ascii_letters) for i in range(10))
+        return "id" + "".join(random.choice(string.ascii_letters) for _ in range(10))

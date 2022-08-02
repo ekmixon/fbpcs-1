@@ -138,7 +138,7 @@ class TestPrivateLiftService(unittest.TestCase):
         self.assertEqual(PrivateComputationInstanceStatus.CREATED, args.status)
 
     def test_update_instance(self):
-        test_pid_id = self.test_pl_id + "_id_match"
+        test_pid_id = f"{self.test_pl_id}_id_match"
         test_pid_protocol = PIDProtocol.UNION_PID
         test_pid_role = PIDRole.PUBLISHER
         test_input_path = "pid_in"
@@ -231,7 +231,7 @@ class TestPrivateLiftService(unittest.TestCase):
         )
 
     def test_id_match(self):
-        test_pid_id = self.test_pl_id + "_id_match"
+        test_pid_id = f"{self.test_pl_id}_id_match"
         test_pid_protocol = PIDProtocol.UNION_PID
         test_pid_role = PIDRole.PUBLISHER
         test_pid_config = {"key": "value"}
@@ -315,7 +315,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_id_match_rerun(self):
         # construct a pl_instance and a pid_instance
-        test_pid_id = self.test_pl_id + "_id_match1"
+        test_pid_id = f"{self.test_pl_id}_id_match1"
         test_pid_protocol = PIDProtocol.UNION_PID
         pl_instance = self.create_sample_instance(
             status=PrivateComputationInstanceStatus.ID_MATCHING_FAILED,
@@ -395,7 +395,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_compute_metrics(self):
         test_pl_id = "test_pl_id"
-        test_mpc_id = test_pl_id + "_compute_metrics"
+        test_mpc_id = f"{test_pl_id}_compute_metrics"
         test_game_name = "lift"
         test_num_containers = 2
         test_mpc_party = MPCParty.CLIENT
@@ -480,7 +480,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_compute_metrics_rerun(self):
         # construct a pl_instance
-        test_mpc_id = self.test_pl_id + "_compute_metrics"
+        test_mpc_id = f"{self.test_pl_id}_compute_metrics"
         test_game_name = "lift"
 
         mpc_instance = PCSMPCInstance.create_instance(
@@ -513,9 +513,12 @@ class TestPrivateLiftService(unittest.TestCase):
         # check a new MPC instance handling metrics computation was to be created
         self.assertEqual(2, len(pl_instance.instances))
         self.assertEqual(
-            self.test_pl_id + "_compute_metrics1",
-            self.pl_service._create_and_start_mpc_instance.call_args[1]["instance_id"],
+            f"{self.test_pl_id}_compute_metrics1",
+            self.pl_service._create_and_start_mpc_instance.call_args[1][
+                "instance_id"
+            ],
         )
+
         self.assertEqual(
             PrivateComputationInstanceStatus.COMPUTATION_STARTED, pl_instance.status
         )
@@ -547,7 +550,7 @@ class TestPrivateLiftService(unittest.TestCase):
 
     def test_aggregate_metrics(self):
         # construct a pl_instance with an mpc_instance handling metrics computation
-        test_mpc_id = self.test_pl_id + "_compute_metrics"
+        test_mpc_id = f"{self.test_pl_id}_compute_metrics"
         mpc_instance = PCSMPCInstance.create_instance(
             instance_id=test_mpc_id,
             game_name="lift",
@@ -596,12 +599,13 @@ class TestPrivateLiftService(unittest.TestCase):
         # construct a pl_instance
         test_pl_id = "test_pl_id"
         mpc_instance = PCSMPCInstance.create_instance(
-            instance_id=test_pl_id + "_aggregate_metrics",
+            instance_id=f"{test_pl_id}_aggregate_metrics",
             game_name="shard_aggregator",
             mpc_party=MPCParty.SERVER,
             num_workers=2,
             status=MPCInstanceStatus.FAILED,
         )
+
         pl_instance = self.create_sample_instance(
             status=PrivateComputationInstanceStatus.AGGREGATION_FAILED,
             instances=[mpc_instance],
@@ -624,9 +628,12 @@ class TestPrivateLiftService(unittest.TestCase):
         # check a new MPC instance handling metrics aggregation was to be created
         self.assertEqual(2, len(pl_instance.instances))
         self.assertEqual(
-            test_pl_id + "_aggregate_metrics1",
-            self.pl_service._create_and_start_mpc_instance.call_args[1]["instance_id"],
+            f"{test_pl_id}_aggregate_metrics1",
+            self.pl_service._create_and_start_mpc_instance.call_args[1][
+                "instance_id"
+            ],
         )
+
         self.assertEqual(
             PrivateComputationInstanceStatus.AGGREGATION_STARTED, pl_instance.status
         )
@@ -787,12 +794,12 @@ class TestPrivateLiftService(unittest.TestCase):
         self.pl_service.instance_repository.read = MagicMock(return_value=pl_instance)
 
         with patch.object(
-            CppLiftIdSpineCombinerService,
-            "combine_on_container_async",
-        ) as mock_combine, patch.object(
-            CppShardingService,
-            "shard_on_container_async",
-        ) as mock_shard:
+                CppLiftIdSpineCombinerService,
+                "combine_on_container_async",
+            ) as mock_combine, patch.object(
+                CppShardingService,
+                "shard_on_container_async",
+            ) as mock_shard:
             # call prepare_data
             self.pl_service.prepare_data(
                 instance_id=self.test_pl_id,
@@ -804,12 +811,13 @@ class TestPrivateLiftService(unittest.TestCase):
             mock_combine.assert_called_once_with(
                 spine_path=pl_instance.pid_stage_output_spine_path,
                 data_path=pl_instance.pid_stage_output_data_path,
-                output_path=pl_instance.data_processing_output_path + "_combine",
+                output_path=f"{pl_instance.data_processing_output_path}_combine",
                 num_shards=self.test_num_containers,
                 onedocker_svc=self.onedocker_service,
                 binary_version=binary_config.binary_version,
                 tmp_directory=binary_config.tmp_directory,
             )
+
             mock_shard.assert_called()
 
     def test_prepare_data_tasks_skipped(self):
@@ -851,7 +859,7 @@ class TestPrivateLiftService(unittest.TestCase):
             )
 
     def test_cancel_current_stage(self):
-        test_mpc_id = self.test_pl_id + "_compute_metrics"
+        test_mpc_id = f"{self.test_pl_id}_compute_metrics"
         test_game_name = "lift"
         test_mpc_party = MPCParty.CLIENT
 

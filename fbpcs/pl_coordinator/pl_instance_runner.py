@@ -37,7 +37,7 @@ class LoggerAdapter(logging.LoggerAdapter):
         self.prefix = prefix
 
     def process(self, msg, kwargs):
-        return "[%s] %s" % (self.prefix, msg), kwargs
+        return f"[{self.prefix}] {msg}", kwargs
 
 
 class PrivateLiftStage(Enum):
@@ -332,7 +332,7 @@ class PrivateLiftPartnerInstance(PrivateLiftCalcInstance):
 
     def get_output_path_for_stage(self, stage: PrivateLiftStage) -> str:
         return self.input_path.replace(
-            ".csv", "_" + self.instance_id + STAGE_OUTPUT_SUFFIX[stage]
+            ".csv", f"_{self.instance_id}{STAGE_OUTPUT_SUFFIX[stage]}"
         )
 
     def run_stage(self, server_ips: List[str], stage: PrivateLiftStage) -> None:
@@ -408,10 +408,14 @@ class PLInstanceRunner:
         )
 
     def get_valid_stage(self) -> Optional[PrivateLiftStage]:
-        for stage in PRIVATE_LIFT_STAGES:
-            if self.ready_for_stage(stage):
-                return stage
-        return None
+        return next(
+            (
+                stage
+                for stage in PRIVATE_LIFT_STAGES
+                if self.ready_for_stage(stage)
+            ),
+            None,
+        )
 
     def wait_valid_stage(self, timeout: int) -> PrivateLiftStage:
         self.logger.info("Polling instances expecting valid stage.")
@@ -498,20 +502,23 @@ class PLInstanceRunner:
                 self.logger.info(f"Stage {stage.value} is complete.")
                 return
             if self.publisher.status is fail_status or self.partner.status is fail_status:
-                if self.publisher.status is fail_status and self.partner.status is start_status and cancel_time <= CANCEL_STAGE_TIMEOUT:
-                    # wait 5 minutes for partner to become fail status on its own
-                    # if not, only perform 'cancel_stage' one time
-                    if cancel_time == CANCEL_STAGE_TIMEOUT:
-                        self.logger.error(f"Canceling partner stage {stage.value}.")
-                        self.partner.cancel_current_stage()
-                    else:
-                        self.logger.info(f"Waiting to cancel partner stage {stage.value}.")
-                    # only cancel once
-                    cancel_time += POLL_INTERVAL
-                else:
+                if (
+                    self.publisher.status is not fail_status
+                    or self.partner.status is not start_status
+                    or cancel_time > CANCEL_STAGE_TIMEOUT
+                ):
                     raise PLInstanceCalculationException(
                         f"Stage {stage.value} failed. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
                     )
+                # wait 5 minutes for partner to become fail status on its own
+                # if not, only perform 'cancel_stage' one time
+                if cancel_time == CANCEL_STAGE_TIMEOUT:
+                    self.logger.error(f"Canceling partner stage {stage.value}.")
+                    self.partner.cancel_current_stage()
+                else:
+                    self.logger.info(f"Waiting to cancel partner stage {stage.value}.")
+                # only cancel once
+                cancel_time += POLL_INTERVAL
             sleep(POLL_INTERVAL)
         raise PLInstanceCalculationException(
             f"Stage {stage.value} timed out after {timeout}s. Publisher status: {self.publisher.status}. Partner status: {self.partner.status}."
